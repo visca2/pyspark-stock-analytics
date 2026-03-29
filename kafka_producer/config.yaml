@@ -1,0 +1,7 @@
+# Config file for the pyspark-stock-analytics application kafka producer
+finnhub:
+  symbols:
+    - AAPL
+    - AMZN
+    - BINANCE:BTCUSDT
+    - IC MARKETS:1

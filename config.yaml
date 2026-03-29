@@ -1,0 +1,4 @@
+# Config file for the pyspark-stock-analytics application
+app:
+  name: PySpark Stock Analytics
+  version: 1.0
