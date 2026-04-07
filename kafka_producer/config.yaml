@@ -5,3 +5,7 @@ finnhub:
     - AMZN
     - BINANCE:BTCUSDT
     - IC MARKETS:1
+  kafka:
+    client_id: finnhub_producer
+    topic: trades
+    key:
