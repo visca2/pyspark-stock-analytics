@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Producer",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}\\kafka_producer\\finnhub_to_kafka.py",
+      "python": "${workspaceFolder}\\kafka_producer\\.venv\\Scripts\\python",
+      "cwd": "${workspaceFolder}\\kafka_producer"
+    },
+    {
+      "name": "Debug Consumer",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}\\spark_streaming\\trades_consumer.py",
+      "python": "${workspaceFolder}\\spark_streaming\\.venv\\Scripts\\python",
+      "cwd": "${workspaceFolder}\\spark_streaming"
+    }
+  ]
+}

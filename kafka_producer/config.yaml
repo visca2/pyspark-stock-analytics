@@ -6,6 +6,6 @@ finnhub:
     - BINANCE:BTCUSDT
     - IC MARKETS:1
   kafka:
-    client_id: finnhub_producer
+    client_id: trades_analytics
     topic: trades
     key:

@@ -14,8 +14,10 @@ def delivery_report(err, msg):
 
 def make_on_message_callback(producer, topic, key, callback):
     def on_message(ws, message):
-        producer.produce(topic, key, message, callback)
+        producer.produce(topic=topic, value=message, key=key, on_delivery=callback)
+        producer.poll(0)
         print(message)
+    return on_message
 
 def on_error(ws, error):
     print(error)
@@ -62,7 +64,10 @@ def main():
                               on_error = on_error,
                               on_close = on_close)
     ws.on_open = make_on_open_callback(config.finnhub.symbols)
-    ws.run_forever()
+    try:
+        ws.run_forever()
+    finally:
+        producer.flush()
 
 if __name__ == "__main__":
     main()

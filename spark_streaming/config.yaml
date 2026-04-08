@@ -1,0 +1,5 @@
+kafka:
+  group_id: trades
+  topic:
+    - trades
+  key:
