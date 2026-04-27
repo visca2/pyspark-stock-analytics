@@ -1,6 +1,10 @@
 from box import Box
 from dotenv import load_dotenv
+from fastavro import schemaless_writer, parse_schema
+import io
+import json
 import os
+from pathlib import Path
 from confluent_kafka import Producer
 import websocket
 import yaml
@@ -12,18 +16,35 @@ def delivery_report(err, msg):
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
-def make_on_message_callback(producer, topic, key, callback):
+def to_trade_record(trade):
+    return {
+        "trade_conditions": trade.get("c"),
+        "symbol": trade["s"],
+        "price": trade["p"],
+        "volume": trade["v"],
+        "timestamp": trade["t"],
+    }
+
+def make_on_message_callback(producer, topic, key, parsed_schema, callback):
     def on_message(ws, message):
-        producer.produce(topic=topic, value=message, key=key, on_delivery=callback)
-        producer.poll(0)
-        print(message)
+        value = json.loads(message)
+
+        if value.get("type") != "trade":
+            return
+
+        for trade in value.get("data", []):
+            bytes_io = io.BytesIO()
+            schemaless_writer(bytes_io, parsed_schema, to_trade_record(trade))
+            binary_data = bytes_io.getvalue()
+            producer.produce(topic=topic, value=binary_data, key=key, on_delivery=callback)
+            producer.poll(0)
     return on_message
 
 def on_error(ws, error):
     print(error)
 
-def on_close(ws):
-    print("closed")
+def on_close(ws, close_status_code, close_msg):
+    print(f"closed: code={close_status_code}, message={close_msg}")
 
 def make_on_open_callback(symbols):
     def on_open(ws):
@@ -32,18 +53,26 @@ def make_on_open_callback(symbols):
     return on_open
 
 def main():
+    project_root = Path(__file__).resolve().parent.parent
+    producer_dir = Path(__file__).resolve().parent
+
     # Load environment configuration
-    load_dotenv()
+    load_dotenv(producer_dir / ".env")
 
     # Load YAML application config
-    with open("config.yaml", "r") as f:
-        config_dict = yaml.safe_load(f);
+    with open(producer_dir / "config.yaml", "r", encoding="utf-8") as f:
+        config_dict = yaml.safe_load(f)
 
     config = Box(config_dict)
 
+    # Configure fastavro serializer
+    with open(project_root / "avro" / "trade.avsc", "r", encoding="utf-8") as f:
+        schema_dict = json.load(f)
+    parsed_schema = parse_schema(schema_dict)
+
     # Set up Kafka producer
     kafka_conf = {
-        'bootstrap.servers': os.getenv("KAFKA_BROKER_ADDRESS"),
+        'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
         'client.id': config.finnhub.kafka.client_id
     }
 
@@ -56,7 +85,7 @@ def main():
     kafka_topic = config.finnhub.kafka.topic
     kafka_key = config.finnhub.kafka.key
 
-    on_message = make_on_message_callback(producer, kafka_topic, kafka_key, delivery_report)
+    on_message = make_on_message_callback(producer, kafka_topic, kafka_key, parsed_schema, delivery_report)
 
     websocket.enableTrace(True)
     ws = websocket.WebSocketApp(f"wss://ws.finnhub.io?token={api_key}",

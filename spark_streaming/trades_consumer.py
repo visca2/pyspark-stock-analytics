@@ -16,7 +16,7 @@ def main():
 
     # Configuration for the consumer
     consumer_conf = {
-        'bootstrap.servers': os.getenv("KAFKA_BROKER_ADDRESS"),
+        'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
         'group.id': config.kafka.group_id,
         'auto.offset.reset': 'earliest'
     }
@@ -26,19 +26,17 @@ def main():
 
     try:
         while True:
-            # Poll for new messages (timeout in seconds)
             msg = consumer.poll(1.0)
 
             if msg is None:
                 continue
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # End of partition event
                     print(f"Reached end of partition {msg.partition()}")
                 else:
                     print(f"Error: {msg.error()}")
             else:
-                # Successfully received message
+                
                 print(f"Received message: {msg.value().decode('utf-8')} from {msg.topic()}")
     except KeyboardInterrupt:
         pass
