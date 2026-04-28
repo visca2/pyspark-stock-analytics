@@ -1,6 +1,7 @@
 # Project specifics
 kafka_producer/.env
 spark_streaming/.env
+.spark-runtime/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
