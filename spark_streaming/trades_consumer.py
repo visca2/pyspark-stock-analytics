@@ -1,13 +1,14 @@
-from box import Box
-from dotenv import load_dotenv
 import json
 import os
 from pathlib import Path
+
+import yaml
+from box import Box
+from dotenv import load_dotenv
 from pyspark import __version__ as pyspark_version
 from pyspark.sql import SparkSession
 from pyspark.sql.avro.functions import from_avro
 from pyspark.sql.functions import col
-import yaml
 
 
 def _default_spark_packages():
@@ -73,13 +74,19 @@ def _configure_windows_hadoop(builder):
 
 
 def main():
+    """
+    Entry point for the script.
+
+    Returns:
+        None
+    """
     project_root = Path(__file__).resolve().parent.parent
     consumer_dir = Path(__file__).resolve().parent
     spark_runtime_dir = project_root / ".spark-runtime"
     checkpoint_dir = spark_runtime_dir / "checkpoints" / "trades_consumer"
     warehouse_dir = spark_runtime_dir / "warehouse"
     local_dir = spark_runtime_dir / "local"
-    
+
     # Load environment configuration
     load_dotenv(consumer_dir / ".env")
 
