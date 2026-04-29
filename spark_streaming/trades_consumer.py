@@ -1,27 +1,23 @@
-import json
+"""Trades consumer"""
+
 import os
 from pathlib import Path
 
-import yaml
-from box import Box
-from dotenv import load_dotenv
 from pyspark.sql.avro.functions import from_avro
 from pyspark.sql.functions import col
 from spark_config import build_spark_session
+from spark_streaming.utils.config_helper import load_config, parse_trade_kafka_schema_json
 
 
 def main():
-    project_root = Path(__file__).resolve().parent.parent
-    consumer_dir = Path(__file__).resolve().parent
+    """Entry point."""
+    project_root = Path.cwd()
 
-    # Load environment configuration
-    load_dotenv(consumer_dir / ".env")
+    # Load configuration and set environment variables
+    config = load_config(project_root)
 
-    # Load YAML application config
-    with open(consumer_dir / "config.yaml", "r", encoding="utf-8") as f:
-        config_dict = yaml.safe_load(f)
+    trade_schema_json = parse_trade_kafka_schema_json(project_root)
 
-    config = Box(config_dict)
     kafka_topics = config.kafka.topic
     subscribe_topics = (
         ",".join(kafka_topics) if isinstance(kafka_topics, list) else kafka_topics
@@ -36,12 +32,8 @@ def main():
         .load()
     )
 
-    # Load the Avro schema used by the producer.
-    with open(project_root / "avro" / "trade.avsc", "r", encoding="utf-8") as f:
-        schema_dict = json.load(f)
-    schema_json = json.dumps(schema_dict)
     parsed = (
-        df.select(from_avro(col("value"), schema_json).alias("data"))
+        df.select(from_avro(col("value"), trade_schema_json).alias("data"))
         .where(col("data").isNotNull())
         .select("data.*")
     )
