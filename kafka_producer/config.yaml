@@ -5,7 +5,6 @@ finnhub:
     - AMZN
     - BINANCE:BTCUSDT
     - OANDA:EUR_USD
-  kafka:
-    client_id: trades_analytics
-    topic: trades
-    key:
+kafka:
+  client_id: trades_analytics
+  topic: trades

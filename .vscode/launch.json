@@ -5,9 +5,9 @@
       "name": "Debug Producer",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}\\kafka_producer\\finnhub_producer.py",
+      "module": "kafka_producer.producer",
       "python": "${workspaceFolder}\\kafka_producer\\.venv\\Scripts\\python",
-      "cwd": "${workspaceFolder}\\kafka_producer"
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "Debug Consumer",
