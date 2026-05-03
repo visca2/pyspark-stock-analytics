@@ -53,10 +53,12 @@ def build_finnhub_websocket(kafka_producer, kafka_topic, parsed_schema, finnhub_
     )
 
     websocket.enableTrace(True)
-    ws = websocket.WebSocketApp(f"wss://ws.finnhub.io?token={os.getenv("FINNHUB_API_KEY")}",
-                              on_message = on_message,
-                              on_error = on_error,
-                              on_close = on_close)
+    ws = websocket.WebSocketApp(
+        f"wss://ws.finnhub.io?token={os.getenv("FINNHUB_API_KEY")}",
+        on_message = on_message,
+        on_error = on_error,
+        on_close = on_close
+    )
 
     ws.on_open = make_on_open_callback(finnhub_symbols)
     return ws
