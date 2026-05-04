@@ -5,7 +5,7 @@
       "name": "Debug Producer",
       "type": "debugpy",
       "request": "launch",
-      "module": "kafka_producer.producer",
+      "module": "kafka_producer.main",
       "python": "${workspaceFolder}\\kafka_producer\\.venv\\Scripts\\python",
       "cwd": "${workspaceFolder}"
     },
@@ -13,9 +13,9 @@
       "name": "Debug Consumer",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}\\spark_streaming\\trades_consumer.py",
+      "program": "${workspaceFolder}\\spark_streaming\\main.py",
       "python": "${workspaceFolder}\\spark_streaming\\.venv\\Scripts\\python",
-      "cwd": "${workspaceFolder}\\spark_streaming"
+      "cwd": "${workspaceFolder}"
     }
   ],
   "compounds": [
