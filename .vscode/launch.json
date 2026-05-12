@@ -16,12 +16,24 @@
       "program": "${workspaceFolder}\\spark_streaming\\main.py",
       "python": "${workspaceFolder}\\spark_streaming\\.venv\\Scripts\\python",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Debug Indicators Consumer",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}\\spark_streaming\\indicators_main.py",
+      "python": "${workspaceFolder}\\spark_streaming\\.venv\\Scripts\\python",
+      "cwd": "${workspaceFolder}"
     }
   ],
   "compounds": [
     {
       "name": "Producer/Consumer",
-      "configurations": ["Debug Producer", "Debug Consumer"],
+      "configurations": [
+        "Debug Producer",
+        "Debug Consumer",
+        "Debug Indicators Consumer"
+      ],
       "stopAll": true
     }
   ]

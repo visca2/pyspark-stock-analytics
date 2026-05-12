@@ -17,4 +17,13 @@ echo "Creating topic trades..."
   --replication-factor 1 \
   --if-not-exists
 
+echo "Creating topic ohlc..."
+
+/opt/kafka/bin/kafka-topics.sh --create \
+  --topic ohlc \
+  --bootstrap-server kafka:9093 \
+  --partitions 1 \
+  --replication-factor 1 \
+  --if-not-exists
+
 echo "Done!"

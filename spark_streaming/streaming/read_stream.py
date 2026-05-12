@@ -11,7 +11,7 @@ def read_stream(spark, schema_json, config):
     df = (
         spark.readStream.format("kafka")
         .option("kafka.bootstrap.servers", os.getenv("KAFKA_BOOTSTRAP_SERVERS"))
-        .option("subscribe", config.kafka.topic)
+        .option("subscribe", config.kafka.trades_topic)
         .option("startingOffsets", "earliest")
         .load()
     )

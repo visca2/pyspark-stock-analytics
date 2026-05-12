@@ -75,8 +75,8 @@ def runtime_paths(project_root, app_name):
 
     return {
         "checkpoint_dir": spark_runtime_dir / "checkpoints" / app_key,
-        "warehouse_dir": spark_runtime_dir / "warehouse",
-        "local_dir": spark_runtime_dir / "local",
+        "warehouse_dir": spark_runtime_dir / "warehouse" / app_key,
+        "local_dir": spark_runtime_dir / "local" / app_key,
     }
 
 
