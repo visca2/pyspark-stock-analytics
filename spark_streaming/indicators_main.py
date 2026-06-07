@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from spark_config import build_spark_session
-from streaming.calculate_indicators import add_moving_averages
+from streaming.calculate_indicators import add_indicators
 from streaming.read_ohlc_stream import read_ohlc_stream
 from utils.config_helper import load_config
 
@@ -16,7 +16,7 @@ def main():
     spark, spark_paths = build_spark_session("IndicatorsConsumer", project_root)
 
     ohlc_df = read_ohlc_stream(spark, config)
-    indicators_df = add_moving_averages(ohlc_df)
+    indicators_df = add_indicators(ohlc_df)
 
     query = (
         indicators_df.writeStream.format("console")

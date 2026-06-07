@@ -29,11 +29,20 @@ def _build_indicator_updater(sma_period, ema_period):
         symbol = key[0]
         recent_closes = []
         last_ema = None
+        cumulative_price_volume = 0.0
+        cumulative_volume = 0.0
 
         if state.exists:
-            saved_recent_closes, saved_last_ema = state.get
+            (
+                saved_recent_closes,
+                saved_last_ema,
+                saved_cumulative_price_volume,
+                saved_cumulative_volume,
+            ) = state.get
             recent_closes = list(saved_recent_closes or [])
             last_ema = saved_last_ema
+            cumulative_price_volume = saved_cumulative_price_volume or 0.0
+            cumulative_volume = saved_cumulative_volume or 0.0
 
         batch_frames = [pdf for pdf in pdf_iter if not pdf.empty]
         if not batch_frames:
@@ -45,7 +54,10 @@ def _build_indicator_updater(sma_period, ema_period):
 
         output_rows = []
         for row in batch_pdf.itertuples(index=False):
+            high_price = float(row.high)
+            low_price = float(row.low)
             close_price = float(row.close)
+            volume = float(row.volume)
 
             recent_closes.append(close_price)
             if len(recent_closes) > sma_period:
@@ -60,33 +72,50 @@ def _build_indicator_updater(sma_period, ema_period):
             )
             last_ema = ema_value
 
+            typical_price = (high_price + low_price + close_price) / 3.0
+            cumulative_price_volume += typical_price * volume
+            cumulative_volume += volume
+            vwap_value = (
+                cumulative_price_volume / cumulative_volume
+                if cumulative_volume
+                else None
+            )
+
             output_rows.append(
                 {
                     "symbol": symbol,
                     "window_start": row.window_start,
                     "window_end": row.window_end,
                     "open": float(row.open),
-                    "high": float(row.high),
-                    "low": float(row.low),
+                    "high": high_price,
+                    "low": low_price,
                     "close": close_price,
-                    "volume": float(row.volume),
+                    "volume": volume,
                     f"sma_{sma_period}": sma_value,
                     f"ema_{ema_period}": ema_value,
+                    "vwap": vwap_value,
                 }
             )
 
-        state.update((recent_closes, last_ema))
+        state.update(
+            (
+                recent_closes,
+                last_ema,
+                cumulative_price_volume,
+                cumulative_volume,
+            )
+        )
         yield pd.DataFrame(output_rows)
 
     return update_indicators
 
 
-def add_moving_averages(
+def add_indicators(
     ohlc_df,
     sma_period=DEFAULT_SMA_PERIOD,
     ema_period=DEFAULT_EMA_PERIOD,
 ):
-    """Add SMA and EMA columns to finalized OHLC candles."""
+    """Add indicator columns to finalized OHLC candles."""
 
     output_schema = StructType(
         [
@@ -100,6 +129,7 @@ def add_moving_averages(
             StructField("volume", DoubleType(), False),
             StructField(f"sma_{sma_period}", DoubleType(), True),
             StructField(f"ema_{ema_period}", DoubleType(), False),
+            StructField("vwap", DoubleType(), True),
         ]
     )
 
@@ -107,6 +137,8 @@ def add_moving_averages(
         [
             StructField("recent_closes", ArrayType(DoubleType()), True),
             StructField("last_ema", DoubleType(), True),
+            StructField("cumulative_price_volume", DoubleType(), False),
+            StructField("cumulative_volume", DoubleType(), False),
         ]
     )
 
@@ -117,3 +149,13 @@ def add_moving_averages(
         outputMode="Append",
         timeoutConf=GroupStateTimeout.NoTimeout,
     )
+
+
+def add_moving_averages(
+    ohlc_df,
+    sma_period=DEFAULT_SMA_PERIOD,
+    ema_period=DEFAULT_EMA_PERIOD,
+):
+    """Backward-compatible alias for adding all indicator columns."""
+
+    return add_indicators(ohlc_df, sma_period, ema_period)
