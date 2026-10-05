@@ -43,3 +43,31 @@ services:
     volumes:
       - ./init-topics.sh:/init-topics.sh
     entrypoint: ["/bin/sh", "-c", "sh /init-topics.sh"]
+  ohlc-job:
+    build:
+      context: .
+      dockerfile: spark_streaming/Dockerfile
+    image: pyspark-stock-analytics-spark-streaming
+    container_name: ohlc-job
+    profiles: ["spark"]
+    command: ["spark_streaming/main.py"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+    volumes:
+      - ./.spark-runtime:/app/.spark-runtime
+    depends_on:
+      - kafka
+  indicators-job:
+    build:
+      context: .
+      dockerfile: spark_streaming/Dockerfile
+    image: pyspark-stock-analytics-spark-streaming
+    container_name: indicators-job
+    profiles: ["spark"]
+    command: ["spark_streaming/indicators_main.py"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+    volumes:
+      - ./.spark-runtime:/app/.spark-runtime
+    depends_on:
+      - kafka

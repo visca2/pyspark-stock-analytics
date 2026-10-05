@@ -1,0 +1,14 @@
+.git
+.idea
+.vscode
+.mypy_cache
+.pytest_cache
+.spark-runtime
+dashboards
+docs
+**/__pycache__
+**/*.pyc
+**/.venv
+**/.venv-py314-backup
+kafka_producer/.env
+*.md

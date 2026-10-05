@@ -47,6 +47,8 @@ pyspark-stock-analytics/
 │   ├── main.py                 # OHLC producer entry point
 │   ├── indicators_main.py      # Indicators consumer entry point
 │   ├── spark_config.py         # SparkSession builder (incl. Windows support)
+│   ├── Dockerfile              # Container image for running the jobs on Linux
+│   ├── requirements.txt        # Runtime deps for the Docker image
 │   └── streaming/
 │       ├── read_stream.py      # Read Avro trades from Kafka
 │       ├── clean_stream.py     # Validate and clean raw trades
@@ -54,17 +56,19 @@ pyspark-stock-analytics/
 │       ├── write_ohlc_stream.py # Publish OHLC candles to Kafka
 │       ├── read_ohlc_stream.py  # Read OHLC candles from Kafka
 │       └── calculate_indicators.py  # SMA, EMA, VWAP via applyInPandasWithState
-├── docker-compose.yaml         # Kafka, Schema Registry, Kafka UI
+├── scripts/
+│   └── seed_trades.py          # Seeds canned trades for the manual smoke test
+├── docker-compose.yaml         # Kafka, Schema Registry, Kafka UI, and (optional) Spark jobs
 └── init-topics.sh              # Creates 'trades' and 'ohlc' topics
 ```
 
 ## Prerequisites
 
 - Python 3.11+
-- Java 11+ (required by PySpark)
+- Java 11+ (required by PySpark) — not needed if you run the Spark jobs via Docker, see below
 - Docker and Docker Compose
 - A [Finnhub](https://finnhub.io/) API key (free tier is sufficient)
-- **Windows only**: `winutils.exe` — set `HADOOP_HOME` to a folder containing `bin\winutils.exe`
+- **Windows only**: `winutils.exe` — set `HADOOP_HOME` to a folder containing `bin\winutils.exe` (only needed for running the Spark jobs natively; not needed via Docker)
 
 ## Setup
 
@@ -121,6 +125,30 @@ python main.py
 cd spark_streaming
 python indicators_main.py
 ```
+
+### Running the Spark jobs via Docker (recommended on Windows)
+
+The indicators job uses a Python UDF (`applyInPandasWithState`), which spawns
+a separate Python worker process that Spark's driver JVM talks to over a
+local socket. On Windows, this worker communication can fail outright — the
+process starts with the correct interpreter and packages but the handshake
+never completes, so the job crashes immediately with no useful error (see
+`docs/smoke-test.md` for the full investigation). This isn't specific to
+this codebase; it's a PySpark-on-Windows limitation. Running the jobs inside
+a Linux container sidesteps it entirely.
+
+```bash
+docker compose --profile spark up -d ohlc-job indicators-job
+docker logs -f indicators-job   # watch SMA/EMA/VWAP output
+docker compose --profile spark stop ohlc-job indicators-job
+```
+
+These two services are opt-in (the `spark` Compose profile) so the default
+`docker compose up -d` is unaffected. `KAFKA_BOOTSTRAP_SERVERS` is set to the
+Kafka container's internal listener (`kafka:9093`) automatically; checkpoints
+are bind-mounted to `.spark-runtime/` on the host, same as running natively.
+The image's Ivy cache is pre-warmed at build time, so there's no jar-download
+delay on startup.
 
 ## Monitoring
 
